@@ -1,10 +1,10 @@
 <?php
 
 /*
-    Plugin Name : Prestashop DOKU Jokul VA Payment Gateway
+    Plugin Name : Prestashop DOKU Jokul O2O Payment Gateway
     Plugin URI  : http://www.doku.com
     Description : DOKU Jokul Convenoence Store Payment Gateway for Prestashop 1.7
-    Version     : 1.1.1
+    Version     : 1.0.0
     Author      : DOKU
     Author URI  : http://www.doku.com
 */
