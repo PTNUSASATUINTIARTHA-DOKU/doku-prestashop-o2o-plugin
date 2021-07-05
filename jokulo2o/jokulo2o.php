@@ -183,17 +183,14 @@ class JokulO2O extends PaymentModule
 	private function _postValidation()
 	{
 		if (Tools::isSubmit('btnSubmit')) {
-			if (intval(Tools::getValue('server_dest')) == 0) {
-				if (!Tools::getValue('client_id_dev'))
-					$this->_postErrors[] = $this->l('Client ID is required.');
-				elseif (!Tools::getValue('shared_key_dev'))
-					$this->_postErrors[] = $this->l('Secret Key is required.');
-			} else {
-				if (!Tools::getValue('client_id_prod'))
-					$this->_postErrors[] = $this->l('Client ID is required.');
-				elseif (!Tools::getValue('shared_key_prod'))
-					$this->_postErrors[] = $this->l('Secret Key is required.');
-			}
+			if (!Tools::getValue('client_id_dev'))
+				$this->$_postErrors[] = $this->l('Client ID is required.');
+			if (!Tools::getValue('shared_key_dev'))
+				$this->$_postErrors[] = $this->l('Secret Key is required.');
+			if (!Tools::getValue('client_id_prod'))
+				$this->$_postErrors[] = $this->l('Client ID is required.');
+			if (!Tools::getValue('shared_key_prod'))
+				$this->$_postErrors[] = $this->l('Secret Key is required.');
 		}
 	}
 
@@ -219,10 +216,10 @@ class JokulO2O extends PaymentModule
 	{
 		if (Tools::isSubmit('btnSubmit')) {
 			$this->_postValidation();
-			if (!sizeof($this->_postErrors)) {
+			if (!sizeof($this->$_postErrors)) {
 				$this->_postProcess();
 			} else {
-				foreach ($this->_postErrors as $err) {
+				foreach ($this->$_postErrors as $err) {
 					$this->_html .= '<div class="alert error">' . $err . '</div>';
 				}
 			}
@@ -505,7 +502,7 @@ class JokulO2O extends PaymentModule
 
 		# Set Redirect Parameter
 		$CURRENCY            			= 360;
-		$invoiceNumber  	   			= substr(str_shuffle(MD5(microtime())), 0, 8);
+		$invoiceNumber  	   			= strtoupper(Tools::passwdGen(9, 'NO_NUMERIC'));
 		$orderid                        = intval($cart->id);
 		$NAME                			= Tools::safeOutput($address->firstname . ' ' . $address->lastname);
 		$EMAIL               			= $customer->email;
@@ -587,7 +584,7 @@ class JokulO2O extends PaymentModule
 				'DOKU_O2O_PAYMENT_RECEIVED',
 				'O2O Payment Received',
 				$stateConfig,
-				false,
+				true,
 				''
 			);
 			$stateConfig['color'] = 'blue';
@@ -596,6 +593,13 @@ class JokulO2O extends PaymentModule
 				'O2O Awaiting for Payment',
 				$stateConfig,
 				true,
+				'doku_payment_code'
+			);
+			$this->addOrderStatus(
+				'DOKU_O2O_INITIALIZE_PAYMENT',
+				'O2O Payment Initialization',
+				$stateConfig,
+				false,
 				''
 			);
 			return true;
@@ -807,7 +811,8 @@ class JokulO2O extends PaymentModule
 		}
 
 		$USE_IDENTIFY = Tools::safeOutput(Configuration::get('USE_IDENTIFY'));
-
+		
+		$DOKU_O2O_INITIALIZE_PAYMENT = Tools::safeOutput(Configuration::get('DOKU_O2O_INITIALIZE_PAYMENT'));
 		$DOKU_O2O_AWAITING_PAYMENT = Tools::safeOutput(Configuration::get('DOKU_O2O_AWAITING_PAYMENT'));
 		$DOKU_O2O_PAYMENT_RECEIVED = Tools::safeOutput(Configuration::get('DOKU_O2O_PAYMENT_RECEIVED'));
 
@@ -816,6 +821,7 @@ class JokulO2O extends PaymentModule
 			"SHARED_KEY" => $SHARED_KEY,
 			"USE_IDENTIFY" => $USE_IDENTIFY,
 			"URL_CHECK" => $URL_CHECK,
+			"DOKU_O2O_INITIALIZE_PAYMENT" => $DOKU_O2O_INITIALIZE_PAYMENT,
 			"DOKU_O2O_AWAITING_PAYMENT" => $DOKU_O2O_AWAITING_PAYMENT,
 			"DOKU_O2O_PAYMENT_RECEIVED" => $DOKU_O2O_PAYMENT_RECEIVED
 		);
@@ -855,6 +861,17 @@ class JokulO2O extends PaymentModule
 			return Configuration::get('JOKULO2O_SHARED_KEY_PROD');
 		}
 	}
+
+	function doku_log($class, $log_msg, $invoiceNumber = "", $path)
+    {
+        $log_filename = "doku_log";
+        $log_header = date(DATE_ATOM, time()) . ' ' . get_class($class) . '---> ' . $invoiceNumber;
+        if (!file_exists($path.$log_filename)) {
+            mkdir($path.$log_filename, 0777, true);
+        }
+        $log_file_data = $path.$log_filename . '/log_' . date('d-M-Y') . '.log';
+        file_put_contents($log_file_data, $log_header . $log_msg . "\n", FILE_APPEND);
+    }
 
 	function guidv4($data = null)
 	{

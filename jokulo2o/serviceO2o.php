@@ -44,6 +44,8 @@ $data = array(
     )
 );
 
+$jokulo2o->doku_log($jokulo2o, " O2O REQUEST ".json_encode($data), $invoiceNumber, '../../');
+
 $config = $jokulo2o->getServerConfig();
 $bodyJson = json_encode($data);
 $dataBody = str_replace(array("\r", "\n"), array("\\r", "\\n"), $bodyJson);
@@ -72,7 +74,7 @@ $configarray = parse_ini_file($_POST['CUSTOMERID']);
 $URL = $configarray[$paymentChannel];
 
 define('POSTURL', $URL);
-
+$jokulo2o->doku_log($jokulo2o, " O2O URL ".$URL, $invoiceNumber, '../../');
 $ch = curl_init(POSTURL);
 curl_setopt($ch, CURLOPT_POST, 1);
 curl_setopt($ch, CURLOPT_POSTFIELDS, $bodyJson);
@@ -95,11 +97,13 @@ $GETDATARESULT = curl_exec($ch);
 $httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 $error_msg = curl_error($ch);
 $myservername = Tools::getHttpHost(true) . __PS_BASE_URI__;
+$jokulo2o->doku_log($jokulo2o, " O2O RESPONSE ".$GETDATARESULT, $invoiceNumber, '../../');
 $GETDATARESULT = json_decode($GETDATARESULT);
 if ($httpcode == 200) {
     $PAYMENTCODE = $GETDATARESULT->online_to_offline_info->payment_code;
     $PAYMENTEXP = $GETDATARESULT->online_to_offline_info->expired_date;
     $JOKULO2O_PAYMENTHOW = $GETDATARESULT->online_to_offline_info->how_to_pay_page;
+    $JOKULO2O_PAYMENTHOWAPI = $GETDATARESULT->online_to_offline_info->how_to_pay_api;
     $STATUSCODE = '';
 
     curl_close($ch);
@@ -129,6 +133,7 @@ if ($httpcode == 200) {
                 <input type="hidden" name="PAYMENTCODE" value="<?php echo $PAYMENTCODE; ?>">
                 <input type="hidden" name="PAYMENTEXP" value="<?php echo $PAYMENTEXP; ?>">
                 <input type="hidden" name="JOKULO2O_PAYMENTHOW" value="<?php echo $JOKULO2O_PAYMENTHOW; ?>">
+                <input type="hidden" name="JOKULO2O_PAYMENTHOWAPI" value="<?php echo $JOKULO2O_PAYMENTHOWAPI; ?>">
                 <input type="hidden" name="PAYMENTCHANNEL" value="<?php echo $paymentChannel; ?>">
             </form>
         </div>

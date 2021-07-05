@@ -21,14 +21,13 @@ switch ($task) {
 			$trx['result_msg']                = null;
 			$trx['process_type']             = 'NOTIFY';
 
+			$jokulo2o->doku_log($jokulo2o, " O2O NOTIF RAW POST DATA ".json_encode($json_data_input), $json_data_input['order']['invoice_number'], '../../');
 			$config = $jokulo2o->getServerConfig();
-
 			$orderId = $jokulo2o->get_order_id_jokul($trx['invoice_number'], $json_data_input['online_to_offline_info']['payment_code']);
 
 			if (!$orderId) {
 				$order_state = $config['DOKU_O2O_AWAITING_PAYMENT'];
 				$trx['amount'] = $json_data_input["order"]["amount"];
-				$orderId = $jokulo2o->get_orderId($trx['invoice_number']);
 			}
 
 			$order = new Order($orderId);
@@ -36,6 +35,7 @@ switch ($task) {
 			$headers = getallheaders();
 			$signature = generateSignature($headers, $jokulo2o->getKey());
 			if ($headers['Signature'] == $signature) {
+				$jokulo2o->doku_log($jokulo2o, " VIRTUAL ACCOUNT NOTIF SIGNATURE SUCCESS ".$signature, $json_data_input['order']['invoice_number'], '../../');
 				$trx['raw_post_data']         = file_get_contents('php://input');
 				$trx['ip_address']            = $jokulo2o->getipaddress();
 				$trx['amount']                = $json_data_input['order']['amount'];
@@ -51,19 +51,27 @@ switch ($task) {
 				if ($result < 1) {
 					http_response_code(404);
 				} else {
-					$trx['message'] = "Notify process message come from DOKU. Success : completed";
-					$status         = "completed";
-					$status_no      = $config['DOKU_O2O_PAYMENT_RECEIVED'];
-					$jokulo2o->emptybag();
+					if (strtolower($json_data_input['transaction']['status']) == strtolower('SUCCESS')) {
+						$trx['message'] = "Notify process message come from DOKU. Success : completed";
+						$status         = "completed";
+						$status_no      = $config['DOKU_O2O_PAYMENT_RECEIVED'];
+						$jokulo2o->emptybag();
+						$jokulo2o->set_order_status($orderId, $status_no);
 
-					$jokulo2o->set_order_status($orderId, $status_no);
-
-					$checkStatusTrx = $jokulo2o->checkStatusTrx($trx);
-					if ($checkStatusTrx < 1) {
-						$jokulo2o->add_jokulo2o($trx);
+						$checkStatusTrx = $jokulo2o->checkStatusTrx($trx);
+						if ($checkStatusTrx < 1) {
+							$jokulo2o->add_jokulo2o($trx);
+						}
+					} else {
+						$trx['message'] = "Notify process message come from DOKU. Success : Failed";
+						$status         = "failed";
+						$status_no      = $config['DOKU_O2O_AWAITING_PAYMENT'];
+						$jokulva->emptybag();
+						$jokulva->set_order_status($order_id, $status_no);
 					}
 				}
 			} else {
+				$jokulo2o->doku_log($jokulo2o, " VIRTUAL ACCOUNT NOTIF SIGNATURE FAILED ".$signature, $json_data_input['order']['invoice_number'], '../../');
 				http_response_code(400);
 			}
 		}
