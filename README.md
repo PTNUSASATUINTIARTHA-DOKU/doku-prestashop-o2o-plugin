@@ -1,4 +1,4 @@
-# Jokul-PrestaShop-O2O Convenience Store-Plugin
+# DOKU-PrestaShop-O2O Convenience Store-Plugin
 
 Jokul makes it easy for you accept payments from various channels. Jokul also highly concerned the payment experience for your customers when they are on your store. With this plugin, you can set it up on your PrestaShop website easily and make great payment experience for your customers.
 
