@@ -13,36 +13,95 @@ if (!$_POST) {
 $invoiceNumber = $_POST['invoice_number'];
 $amount = $_POST['amount'];
 $orderId = $_POST['order_id'];
+$sub_account_data = Tools::safeOutput(Tools::getValue('set_sub_account_data_o2o', Configuration::get('set_sub_account_data_o2o')));
 
+$listContent = array();
+$listContent = Tools::safeOutput(Tools::getValue('LIST_BANK_o2o', Configuration::get('LIST_BANK_o2o')));
+$trimspace = preg_replace('/\s+/', '', $listContent);
+$listDataBank = json_decode(htmlspecialchars_decode($trimspace), true);
 
-# generate CheckSum
-$data = array(
-    "order" => array(
-        "invoice_number" => $invoiceNumber,
-        "amount" => $amount
-    ),
-    "online_to_offline_info" => array(
-        "expired_time" => $_POST['EXP_TIME'],
-        "reusable_status" => false,
-        "info1" => ''
-    ),
-    "alfa_info" => array(
-        "receipt" => array(
-            "footer_message" => $_POST['JOKULO2O_FOOTER_MESSAGE']
+if (count($listDataBank) > 0) {
+
+    foreach($listDataBank as $key => $item){
+        unset($listDataBank[$key]["bank_id"]);
+    }
+    
+    $data = array(
+        "order" => array(
+            "invoice_number" => $invoiceNumber,
+            "amount" => $amount
+        ),
+        "online_to_offline_info" => array(
+            "expired_time" => $_POST['EXP_TIME'],
+            "reusable_status" => false,
+            "info1" => ''
+        ),
+        "alfa_info" => array(
+            "receipt" => array(
+                "footer_message" => $_POST['JOKULO2O_FOOTER_MESSAGE']
+            )
+        ),
+        "customer" => array(
+            "name" => $_POST['NAME'],
+            "email" => $_POST['EMAIL']
+        ),
+        "additional_info" => $sub_account_data !== '' ? array(
+            "integration" => array(
+                "name" => "prestashop-plugin",
+                "module-name" => "jokul-va",
+                "version" => "1.1.2"
+            ),
+            "account" => array(
+                "id" =>  $sub_account_data
+            ),
+            "settlement"=> $listDataBank
+        ): array(
+            "integration" => array(
+                "name" => "prestashop-plugin",
+                "module-name" => "jokul-va",
+                "version" => "1.1.2"
+            ),
+            "settlement"=> $listDataBank
         )
-    ),
-    "customer" => array(
-        "name" => $_POST['NAME'],
-        "email" => $_POST['EMAIL']
-    ),
-    "additional_info" => array(
-        "integration" => array(
-            "name" => "prestashop-plugin",
-            "module-name" => "jokul-o2o",
-            "version"=> "1.0.0"
+    );
+} else {
+    $data = array(
+        "order" => array(
+            "invoice_number" => $invoiceNumber,
+            "amount" => $amount
+        ),
+        "online_to_offline_info" => array(
+            "expired_time" => $_POST['EXP_TIME'],
+            "reusable_status" => false,
+            "info1" => ''
+        ),
+        "alfa_info" => array(
+            "receipt" => array(
+                "footer_message" => $_POST['JOKULO2O_FOOTER_MESSAGE']
+            )
+        ),
+        "customer" => array(
+            "name" => $_POST['NAME'],
+            "email" => $_POST['EMAIL']
+        ),
+        "additional_info" => $sub_account_data !== '' ? array(
+            "integration" => array(
+                "name" => "prestashop-plugin",
+                "module-name" => "jokul-va",
+                "version" => "1.1.2"
+            ),
+            "account" => array(
+                "id" =>  $sub_account_data
+            )
+        ): array(
+            "integration" => array(
+                "name" => "prestashop-plugin",
+                "module-name" => "jokul-va",
+                "version" => "1.1.2"
+            )
         )
-    )
-);
+    );
+}
 
 $jokulo2o->doku_log($jokulo2o, " O2O REQUEST ".json_encode($data), $invoiceNumber, '../../');
 

@@ -57,6 +57,7 @@ switch ($task) {
 						$status_no      = $config['DOKU_O2O_PAYMENT_RECEIVED'];
 						$jokulo2o->emptybag();
 						$jokulo2o->set_order_status($orderId, $status_no);
+						$jokulo2o->doku_log($jokulo2o, "O2O UPDATE STATUS DOKU_O2O_PAYMENT_RECEIVED ", $json_data_input['order']['invoice_number'], '../../');
 
 						$checkStatusTrx = $jokulo2o->checkStatusTrx($trx);
 						if ($checkStatusTrx < 1) {
@@ -68,6 +69,7 @@ switch ($task) {
 						$status_no      = $config['DOKU_O2O_AWAITING_PAYMENT'];
 						$jokulva->emptybag();
 						$jokulva->set_order_status($order_id, $status_no);
+						$jokulo2o->doku_log($jokulo2o, "O2O UPDATE STATUS DOKU_O2O_AWAITING_PAYMENT ", $json_data_input['order']['invoice_number'], '../../');
 					}
 				}
 			} else {
